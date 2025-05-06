@@ -1,5 +1,8 @@
 import math
-from typing import Literal
+from typing import Literal, Annotated, cast, Any
+from pydantic import Field
+# from mcp.server.fastmcp.types import ToolAnnotations
+ToolAnnotations = Any
 
 from mcp.server.fastmcp import FastMCP
 
@@ -7,17 +10,34 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("black-scholes")
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Option Price",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_price(
-    S: float,  # Spot price
-    K: float,  # Strike price
-    T: float,  # Time to maturity (in years)
-    r: float,  # Risk-free rate (annual, decimal)
-    q: float,  # Dividend yield (annual, decimal)
-    vol: float,  # Volatility (annual, decimal)
-    type: Literal["call", "put"],  # Option type
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes price for a European call or put option."""
+    """Calculate the Black-Scholes price for a European call or put option.
+    
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     if T <= 0 or vol <= 0 or S <= 0 or K <= 0:
         raise ValueError("Invalid input: S, K, T, and vol must be positive.")
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
@@ -40,17 +60,34 @@ def calc_black_scholes_price(
 
 
 # --- Black-Scholes Greeks and higher-order Greeks ---
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Delta",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_delta(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes delta."""
+    """Calculate the Black-Scholes delta (sensitivity of option price to spot price).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     import math
 
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
@@ -62,17 +99,36 @@ def calc_black_scholes_delta(
         raise ValueError("type must be 'call' or 'put'")
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Vega",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_vega(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes vega."""
+    """Calculate the Black-Scholes vega (sensitivity of option price to volatility).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     import math
 
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
@@ -80,17 +136,34 @@ def calc_black_scholes_vega(
     return S * math.exp(-q * T) * norm_pdf * math.sqrt(T)
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Theta",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_theta(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes theta."""
+    """Calculate the Black-Scholes theta (sensitivity of option price to time decay).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     import math
 
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
@@ -113,17 +186,36 @@ def calc_black_scholes_theta(
     return theta
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Gamma",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_gamma(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes gamma."""
+    """Calculate the Black-Scholes gamma (sensitivity of delta to spot price).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     import math
 
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
@@ -131,11 +223,37 @@ def calc_black_scholes_gamma(
     return math.exp(-q * T) * norm_pdf / (S * vol * math.sqrt(T))
 
 
-@mcp.tool()
-def calc_black_scholes_rho(S: float, K: float, T: float, r: float, q: float, vol: float, type: Literal["call", "put"]) -> float:
-    """Calculate the Black-Scholes rho (sensitivity to interest rate)."""
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Rho",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
+def calc_black_scholes_rho(
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
+) -> float:
+    """Calculate the Black-Scholes rho (sensitivity of option price to interest rate).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     import math
-    d1 = (math.log(S / K) + (r - q + 0.5 * vol ** 2) * T) / (vol * math.sqrt(T))
+    
+    d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     if type == "call":
         return K * T * math.exp(-r * T) * 0.5 * (1 + math.erf(d2 / math.sqrt(2)))
@@ -145,19 +263,70 @@ def calc_black_scholes_rho(S: float, K: float, T: float, r: float, q: float, vol
         raise ValueError("type must be 'call' or 'put'")
 
 
-@mcp.tool()
-def calc_black_scholes_lambda(S: float, K: float, T: float, r: float, q: float, vol: float, type: Literal["call", "put"]) -> float:
-    """Calculate the Black-Scholes lambda (elasticity)."""
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Lambda",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
+def calc_black_scholes_lambda(
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
+) -> float:
+    """Calculate the Black-Scholes lambda (elasticity: percent change in option price per percent change in spot price).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     price = calc_black_scholes_price(S, K, T, r, q, vol, type)
     delta = calc_black_scholes_delta(S, K, T, r, q, vol, type)
     return (delta * S) / price if price != 0 else float('nan')
 
 
-@mcp.tool()
-def calc_black_scholes_epsilon(S: float, K: float, T: float, r: float, q: float, vol: float, type: Literal["call", "put"]) -> float:
-    """Calculate the Black-Scholes epsilon (sensitivity to dividend yield)."""
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Epsilon",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
+def calc_black_scholes_epsilon(
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
+) -> float:
+    """Calculate the Black-Scholes epsilon (sensitivity of option price to dividend yield).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     import math
-    d1 = (math.log(S / K) + (r - q + 0.5 * vol ** 2) * T) / (vol * math.sqrt(T))
+    
+    d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     if type == "call":
         return -T * S * math.exp(-q * T) * 0.5 * (1 + math.erf(d1 / math.sqrt(2)))
     elif type == "put":
@@ -166,17 +335,34 @@ def calc_black_scholes_epsilon(S: float, K: float, T: float, r: float, q: float,
         raise ValueError("type must be 'call' or 'put'")
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Charm",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_charm(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes charm (delta decay)."""
+    """Calculate the Black-Scholes charm (delta decay: sensitivity of delta to time).
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put'
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
@@ -194,17 +380,36 @@ def calc_black_scholes_charm(
         raise ValueError("type must be 'call' or 'put'")
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Color",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_color(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes color (gamma decay)."""
+    """Calculate the Black-Scholes color (gamma decay: sensitivity of gamma to time).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
     color = (
@@ -216,17 +421,36 @@ def calc_black_scholes_color(
     return color
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Speed",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_speed(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes speed (rate of change of gamma)."""
+    """Calculate the Black-Scholes speed (rate of change of gamma with respect to spot price).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
     gamma = math.exp(-q * T) * norm_pdf / (S * vol * math.sqrt(T))
@@ -234,17 +458,36 @@ def calc_black_scholes_speed(
     return speed
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Ultima",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_ultima(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes ultima (third derivative wrt vol)."""
+    """Calculate the Black-Scholes ultima (third derivative of option price with respect to volatility).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
@@ -253,17 +496,36 @@ def calc_black_scholes_ultima(
     return ultima
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Vanna",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_vanna(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes vanna (sensitivity of vega to spot)."""
+    """Calculate the Black-Scholes vanna (sensitivity of vega to spot price).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
@@ -271,17 +533,36 @@ def calc_black_scholes_vanna(
     return vanna
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Vera",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_vera(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes vera (sensitivity of rho to vol)."""
+    """Calculate the Black-Scholes vera (sensitivity of rho to volatility).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
@@ -289,17 +570,36 @@ def calc_black_scholes_vera(
     return vera
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Veta",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_veta(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes veta (sensitivity of vega to time)."""
+    """Calculate the Black-Scholes veta (sensitivity of vega to time to maturity).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
     veta = (
@@ -312,17 +612,36 @@ def calc_black_scholes_veta(
     return veta
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Vomma",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_vomma(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes vomma (sensitivity of vega to vol)."""
+    """Calculate the Black-Scholes vomma (sensitivity of vega to volatility).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
@@ -330,17 +649,36 @@ def calc_black_scholes_vomma(
     return vomma
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=cast(ToolAnnotations, {
+        "title": "Calculate Black-Scholes Zomma",
+        "readOnlyHint": True,
+        "idempotentHint": True,
+        "openWorldHint": False
+    })
+)
 def calc_black_scholes_zomma(
-    S: float,
-    K: float,
-    T: float,
-    r: float,
-    q: float,
-    vol: float,
-    type: Literal["call", "put"],
+    S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
+    K: Annotated[float, Field(description="Strike price of the option", gt=0)],
+    T: Annotated[float, Field(description="Time to maturity in years", gt=0)],
+    r: Annotated[float, Field(description="Risk-free interest rate (annualized, as a decimal)")],
+    q: Annotated[float, Field(description="Dividend yield (annualized, as a decimal)")],
+    vol: Annotated[float, Field(description="Volatility of the underlying asset (annualized, as a decimal)", gt=0)],
+    type: Annotated[Literal["call", "put"], Field(description="Option type: 'call' or 'put'")],
 ) -> float:
-    """Calculate the Black-Scholes zomma (sensitivity of gamma to vol)."""
+    """Calculate the Black-Scholes zomma (sensitivity of gamma to volatility).
+
+    Note: The 'type' argument is included for interface consistency but is not used in the calculation.
+
+    Parameters:
+        S: Spot price of the underlying asset (must be positive)
+        K: Strike price of the option (must be positive)
+        T: Time to maturity in years (must be positive)
+        r: Risk-free interest rate (annualized, as a decimal)
+        q: Dividend yield (annualized, as a decimal)
+        vol: Volatility of the underlying asset (annualized, as a decimal, must be positive)
+        type: Option type, either 'call' or 'put' (not used)
+    """
     d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
     d2 = d1 - vol * math.sqrt(T)
     norm_pdf = math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
