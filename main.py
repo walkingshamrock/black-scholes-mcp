@@ -10,14 +10,7 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("black-scholes")
 
 
-@mcp.tool(
-    annotations=cast(ToolAnnotations, {
-        "title": "Calculate Black-Scholes Option Price",
-        "readOnlyHint": True,
-        "idempotentHint": True,
-        "openWorldHint": False
-    })
-)
+@mcp.tool()
 def calc_black_scholes_price(
     S: Annotated[float, Field(description="Spot price of the underlying asset", gt=0)],
     K: Annotated[float, Field(description="Strike price of the option", gt=0)],
