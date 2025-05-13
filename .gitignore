@@ -1,0 +1,46 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.envrc
+
+# OS-specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor configuration
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Test outputs and coverage reports
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Local settings/secrets (if any, be cautious with general patterns)
+# Example: local_settings.py
+# Example: *.local
+# Example: .env.local
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# MyST markdown specific
+.myst_deps/
+
+# Others
+.github/

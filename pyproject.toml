@@ -1,0 +1,11 @@
+[project]
+name = "black-scholes-mcp"
+version = "0.1.0"
+description = "A Model Context Protocol (MCP) server for Black-Scholes option pricing and Greeks calculation."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.2.8",
+    "mcp[cli]>=1.7.1",
+    # No additional dependencies required for core Black-Scholes calculations
+]
